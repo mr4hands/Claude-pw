@@ -1,14 +1,20 @@
 package dev.wristcontrol.wear.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -64,6 +70,8 @@ class MainActivity : ComponentActivity() {
 private fun WristApp(initialDestination: String?, initialSessionId: String?) {
     val viewModel: MainViewModel = viewModel(factory = MainViewModel.Factory)
     val navController = rememberSwipeDismissableNavController()
+
+    RequestNotificationPermissionOnce()
 
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val wristState by viewModel.wristState.collectAsStateWithLifecycle()
@@ -185,6 +193,32 @@ private fun WristApp(initialDestination: String?, initialSessionId: String?) {
                 SettingsRoute(viewModel = viewModel, listState = settingsListState, navController = navController)
             }
         }
+    }
+}
+
+/**
+ * Asks for POST_NOTIFICATIONS on first launch.
+ *
+ * Not optional decoration: from API 33 the permission is denied by default, and
+ * without it the approval notification never posts — which on a watch means an
+ * approval raised while the screen is off simply never reaches the user. The
+ * app still runs if it is refused; approvals then only appear while the app or
+ * the tile is on screen.
+ */
+@Composable
+private fun RequestNotificationPermissionOnce() {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* Either way the app keeps working; nothing to do here. */ }
+
+    LaunchedEffect(Unit) {
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!granted) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 }
 
