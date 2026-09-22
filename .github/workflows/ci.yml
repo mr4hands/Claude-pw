@@ -1,0 +1,159 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push supersedes an in-flight run on the same branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+
+jobs:
+  build:
+    name: Build APKs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          # Default is "tools platform-tools"; Google removed the legacy
+          # "tools" package, so sdkmanager exits 1 trying to install it.
+          # Empty means licenses only — AGP pulls the platform it needs.
+          packages: ""
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Assemble watch app
+        run: ./gradlew :wear:assembleDebug --stacktrace
+
+      - name: Assemble phone companion
+        run: ./gradlew :mobile:assembleDebug --stacktrace
+
+      # Downloadable from the run summary, so testing on a watch needs no
+      # local Android toolchain: grab the APK and `adb install -r` it.
+      - name: Upload APKs
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: |
+            wear/build/outputs/apk/debug/*.apk
+            mobile/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          # Default is "tools platform-tools"; Google removed the legacy
+          # "tools" package, so sdkmanager exits 1 trying to install it.
+          # Empty means licenses only — AGP pulls the platform it needs.
+          packages: ""
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # No --stacktrace here: it buries the assertion messages under Gradle
+      # internals, and testLogging already prints the failures.
+      - name: Run unit tests
+        run: ./gradlew :wear:testDebugUnitTest
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: wear/build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  lint:
+    name: Android Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          # Default is "tools platform-tools"; Google removed the legacy
+          # "tools" package, so sdkmanager exits 1 trying to install it.
+          # Empty means licenses only — AGP pulls the platform it needs.
+          packages: ""
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Lint watch app
+        run: ./gradlew :wear:lintDebug --stacktrace
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: wear/build/reports/lint-results-debug.*
+          if-no-files-found: ignore
+          retention-days: 14
+
+  node:
+    name: Broker and daemon
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # The daemon's integration test drives the real broker, so the broker
+      # has to be built first or that test silently skips.
+      - name: Build the broker
+        working-directory: broker
+        run: |
+          npm ci
+          npm run build
+
+      - name: Test the broker
+        working-directory: broker
+        run: npm test
+
+      - name: Test the daemon
+        working-directory: daemon
+        run: |
+          npm ci
+          npm test

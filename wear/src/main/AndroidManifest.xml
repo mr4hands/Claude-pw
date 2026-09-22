@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature android:name="android.hardware.type.watch" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Lets the approval notification wake the screen straight to the gate. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+    <!-- The speech recogniser and the OAuth companion live in other packages. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".ClaudeWristApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.WristControl"
+        tools:targetApi="34">
+
+        <uses-library
+            android:name="com.google.android.wearable"
+            android:required="false" />
+
+        <!-- Runs without a phone app installed: auth falls back to
+             RemoteAuthClient, which only needs the Wear OS companion. -->
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.WristControl">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Invisible trampoline for tile Approve/Deny buttons. -->
+        <activity
+            android:name=".tile.TileActionActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleInstance"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.WristControl.Invisible" />
+
+        <service
+            android:name=".service.SessionForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <receiver
+            android:name=".service.ApprovalActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="dev.wristcontrol.wear.action.APPROVE" />
+                <action android:name="dev.wristcontrol.wear.action.DENY" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Fallback login channel: the phone app pushes tokens over the Data Layer. -->
+        <service
+            android:name=".data.auth.PhoneTokenListenerService"
+            android:exported="true"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/wristcontrol"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+
+        <!-- Status tile. -->
+        <service
+            android:name=".tile.ClaudeStatusTileService"
+            android:description="@string/tile_description"
+            android:exported="true"
+            android:icon="@drawable/ic_status"
+            android:label="@string/tile_label"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_preview" />
+        </service>
+    </application>
+</manifest>

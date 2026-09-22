@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auth tokens are device-bound through the Keystore; restoring them onto a
+     different watch would leave the user with a store that cannot be decrypted. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="wristcontrol_auth.xml" />
+</full-backup-content>

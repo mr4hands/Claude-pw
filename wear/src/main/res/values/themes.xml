@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.WristControl" parent="@android:style/Theme.DeviceDefault">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+
+    <!-- The tile action trampoline must never draw; it exists to run one command. -->
+    <style name="Theme.WristControl.Invisible" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowNoDisplay">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>
