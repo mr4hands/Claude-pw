@@ -1,4 +1,4 @@
-name: Android
+name: CI
 
 on:
   push:
@@ -128,3 +128,32 @@ jobs:
           path: wear/build/reports/lint-results-debug.*
           if-no-files-found: ignore
           retention-days: 14
+
+  node:
+    name: Broker and daemon
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # The daemon's integration test drives the real broker, so the broker
+      # has to be built first or that test silently skips.
+      - name: Build the broker
+        working-directory: broker
+        run: |
+          npm ci
+          npm run build
+
+      - name: Test the broker
+        working-directory: broker
+        run: npm test
+
+      - name: Test the daemon
+        working-directory: daemon
+        run: |
+          npm ci
+          npm test
