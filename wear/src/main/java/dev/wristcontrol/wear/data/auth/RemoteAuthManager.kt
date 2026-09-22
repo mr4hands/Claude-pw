@@ -75,7 +75,11 @@ class RemoteAuthManager(
         return RemoteAuthResult.Success(
             code = code,
             verifier = verifier.value,
-            redirectUri = request.redirectUrl,
+            // The token endpoint needs the same redirect_uri the authorization
+            // request used. Rather than depend on OAuthRequest exposing it,
+            // derive it from the redirect we were just handed: strip the query
+            // and fragment and what is left is exactly that URI.
+            redirectUri = responseUrl.buildUpon().clearQuery().fragment(null).build().toString(),
         )
     }
 

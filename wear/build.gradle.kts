@@ -113,6 +113,7 @@ dependencies {
 
     implementation(libs.play.services.wearable)
     implementation(libs.okhttp)
+    implementation(libs.guava)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

@@ -9,6 +9,7 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.ScalingLazyListState
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
@@ -41,7 +42,10 @@ fun SettingsScreen(
                 onCheckedChange = onSpeakUpdatesChange,
                 label = { Text("Speak updates") },
                 toggleControl = {
-                    ToggleChipDefaults.SwitchIcon(checked = speakUpdates)
+                    Icon(
+                        imageVector = ToggleChipDefaults.switchIcon(speakUpdates),
+                        contentDescription = if (speakUpdates) "On" else "Off",
+                    )
                 },
             )
         }
@@ -53,7 +57,10 @@ fun SettingsScreen(
                 onCheckedChange = onHapticsChange,
                 label = { Text("Buzz on approval") },
                 toggleControl = {
-                    ToggleChipDefaults.SwitchIcon(checked = hapticsOnApproval)
+                    Icon(
+                        imageVector = ToggleChipDefaults.switchIcon(hapticsOnApproval),
+                        contentDescription = if (hapticsOnApproval) "On" else "Off",
+                    )
                 },
             )
         }
@@ -67,7 +74,10 @@ fun SettingsScreen(
                     label = { Text("Demo mode") },
                     secondaryLabel = { Text("Scripted session, no network") },
                     toggleControl = {
-                        ToggleChipDefaults.SwitchIcon(checked = demoMode)
+                        Icon(
+                            imageVector = ToggleChipDefaults.switchIcon(demoMode),
+                            contentDescription = if (demoMode) "On" else "Off",
+                        )
                     },
                 )
             }
