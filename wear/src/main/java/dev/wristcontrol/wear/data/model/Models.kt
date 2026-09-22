@@ -21,7 +21,7 @@ enum class AgentStatus(val wireName: String) {
     }
 }
 
-/** A `claude --rc` session discovered through the cloud session manager. */
+/** A `claude remote-control` session discovered through the cloud session manager. */
 data class RemoteSession(
     val id: String,
     val title: String,

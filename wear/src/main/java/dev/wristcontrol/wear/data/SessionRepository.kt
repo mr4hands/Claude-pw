@@ -22,10 +22,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -63,11 +62,18 @@ class SessionRepository(
     private val _sessions = MutableStateFlow<Loadable<List<RemoteSession>>>(Loadable.Loading)
     val sessions: StateFlow<Loadable<List<RemoteSession>>> = _sessions.asStateFlow()
 
-    private val _activeSession = MutableStateFlow<RemoteSession?>(null)
-    private val _status = MutableStateFlow(AgentStatus.UNKNOWN)
-    private val _connection = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
-    private val _pendingApproval = MutableStateFlow<ApprovalRequest?>(null)
-    private val _lastAssistantMessage = MutableStateFlow<String?>(null)
+    /**
+     * The authoritative snapshot, held directly rather than combined from
+     * per-field flows.
+     *
+     * This has to be correct the instant a mutation happens: ClaudeStatusTileService
+     * reads `state.value` synchronously while building a tile, in a process that
+     * may have just been started for that request. Deriving it through `combine`
+     * meant the value only caught up once a collector had been scheduled, so a
+     * tile could render "Idle" while an approval was already pending.
+     */
+    private val _state = MutableStateFlow(WristState())
+    val state: StateFlow<WristState> = _state.asStateFlow()
 
     private val _logs = MutableStateFlow<List<LogEntry>>(emptyList())
     val logs: StateFlow<List<LogEntry>> = _logs.asStateFlow()
@@ -88,16 +94,6 @@ class SessionRepository(
     )
     val spokenMessages: SharedFlow<String> = _spokenMessages.asSharedFlow()
 
-    val state: StateFlow<WristState> = combine(
-        _activeSession,
-        _status,
-        _connection,
-        _pendingApproval,
-        _lastAssistantMessage,
-    ) { session, status, connection, approval, message ->
-        WristState(session, status, connection, approval, message)
-    }.stateInEagerly(scope, WristState())
-
     private var stream: SessionStream? = null
     private var streamJob: Job? = null
     private val deltaBuffers = mutableMapOf<String, StringBuilder>()
@@ -116,11 +112,10 @@ class SessionRepository(
 
     /** Idempotent: re-attaching to the session we are already on is a no-op. */
     fun attach(session: RemoteSession) {
-        if (_activeSession.value?.id == session.id && stream != null) return
+        if (_state.value.session?.id == session.id && stream != null) return
         detach()
 
-        _activeSession.value = session
-        _status.value = session.status
+        _state.update { it.copy(session = session, status = session.status) }
         settings.lastSessionId = session.id
 
         val opened = clientProvider().openStream(session.id)
@@ -150,16 +145,13 @@ class SessionRepository(
         stream?.close()
         stream = null
         deltaBuffers.clear()
-        _connection.value = ConnectionState.Disconnected
-        _pendingApproval.value = null
-        _activeSession.value = null
-        _status.value = AgentStatus.UNKNOWN
+        _state.value = WristState()
         _logs.value = emptyList()
     }
 
     private suspend fun handle(message: StreamMessage) {
         when (message) {
-            is StreamMessage.Connection -> _connection.value = message.state
+            is StreamMessage.Connection -> _state.update { it.copy(connection = message.state) }
             is StreamMessage.Event -> handleEvent(message.event)
         }
     }
@@ -167,25 +159,39 @@ class SessionRepository(
     private suspend fun handleEvent(event: SessionEvent) {
         when (event) {
             is SessionEvent.StatusChanged -> {
-                _status.value = event.status
                 // A status that moves off AWAITING_APPROVAL means somebody else
                 // answered; drop our stale prompt rather than showing a dead one.
-                if (event.status != AgentStatus.AWAITING_APPROVAL) {
-                    _pendingApproval.value = null
+                _state.update {
+                    it.copy(
+                        status = event.status,
+                        pendingApproval = if (event.status == AgentStatus.AWAITING_APPROVAL) {
+                            it.pendingApproval
+                        } else {
+                            null
+                        },
+                    )
                 }
             }
 
             is SessionEvent.ApprovalRequested -> {
-                val alreadyShowing = _pendingApproval.value?.id == event.request.id
-                _pendingApproval.value = event.request
-                _status.value = AgentStatus.AWAITING_APPROVAL
+                val alreadyShowing = _state.value.pendingApproval?.id == event.request.id
+                _state.update {
+                    it.copy(
+                        pendingApproval = event.request,
+                        status = AgentStatus.AWAITING_APPROVAL,
+                    )
+                }
                 // Re-sent on every reconnect snapshot; only alert on the first sight.
                 if (!alreadyShowing) _approvalAlerts.emit(event.request)
             }
 
             is SessionEvent.ApprovalResolved -> {
-                if (_pendingApproval.value?.id == event.requestId) {
-                    _pendingApproval.value = null
+                _state.update {
+                    if (it.pendingApproval?.id == event.requestId) {
+                        it.copy(pendingApproval = null)
+                    } else {
+                        it
+                    }
                 }
                 appendLog(
                     LogEntry(
@@ -206,7 +212,7 @@ class SessionRepository(
                     val complete = buffer.toString().trim()
                     deltaBuffers.remove(event.messageId)
                     if (complete.isNotEmpty()) {
-                        _lastAssistantMessage.value = complete
+                        _state.update { it.copy(lastAssistantMessage = complete) }
                         appendLog(
                             LogEntry(event.messageId, LogRole.ASSISTANT, complete, clock())
                         )
@@ -224,8 +230,12 @@ class SessionRepository(
                         clock(),
                     )
                 )
-                _status.value = AgentStatus.IDLE
-                _connection.value = ConnectionState.Disconnected
+                _state.update {
+                    it.copy(
+                        status = AgentStatus.IDLE,
+                        connection = ConnectionState.Disconnected,
+                    )
+                }
             }
 
             is SessionEvent.Failure ->
@@ -240,18 +250,22 @@ class SessionRepository(
 
     suspend fun resolveApproval(requestId: String, approved: Boolean): Boolean {
         val sent = stream?.send(ClientCommand.ResolveApproval(requestId, approved)) ?: false
-        if (sent && _pendingApproval.value?.id == requestId) {
+        if (sent && _state.value.pendingApproval?.id == requestId) {
             // Optimistic: the relay echoes approval_resolved, but the user
             // should see the gate close on their tap, not a round trip later.
-            _pendingApproval.value = null
-            _status.value = if (approved) AgentStatus.EXECUTING else AgentStatus.THINKING
+            _state.update {
+                it.copy(
+                    pendingApproval = null,
+                    status = if (approved) AgentStatus.EXECUTING else AgentStatus.THINKING,
+                )
+            }
         }
         return sent
     }
 
     /** Convenience for the tile and notification, which answer "the current one". */
     suspend fun resolvePendingApproval(approved: Boolean): Boolean {
-        val pending = _pendingApproval.value ?: return false
+        val pending = _state.value.pendingApproval ?: return false
         return resolveApproval(pending.id, approved)
     }
 
@@ -261,7 +275,7 @@ class SessionRepository(
         val sent = stream?.send(ClientCommand.SendPrompt(trimmed)) ?: false
         if (sent) {
             appendLog(LogEntry("user-${clock()}", LogRole.USER, trimmed, clock()))
-            _status.value = AgentStatus.THINKING
+            _state.update { it.copy(status = AgentStatus.THINKING) }
         }
         return sent
     }
@@ -272,17 +286,4 @@ class SessionRepository(
         const val TAG = "SessionRepository"
         const val MAX_LOG_ENTRIES = 100
     }
-}
-
-/**
- * `stateIn` with eager sharing, spelled out so the repository's state is hot
- * before any UI collects it — the tile reads `state.value` synchronously.
- */
-private fun <T> kotlinx.coroutines.flow.Flow<T>.stateInEagerly(
-    scope: CoroutineScope,
-    initial: T,
-): StateFlow<T> {
-    val flow = MutableStateFlow(initial)
-    distinctUntilChanged().onEach { flow.value = it }.launchIn(scope)
-    return flow.asStateFlow()
 }

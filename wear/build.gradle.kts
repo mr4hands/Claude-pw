@@ -74,6 +74,18 @@ android {
         unitTests.isIncludeAndroidResources = true
         // Codec and repository tests are pure JVM apart from android.util.Log.
         unitTests.isReturnDefaultValues = true
+
+        // Without this a CI failure prints only "There were failing tests" and
+        // a page of Gradle internals, with the actual assertion in an HTML
+        // report nobody can read from a log.
+        unitTests.all {
+            it.testLogging {
+                events("failed", "skipped")
+                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                showStackTraces = true
+                showCauses = true
+            }
+        }
     }
 }
 

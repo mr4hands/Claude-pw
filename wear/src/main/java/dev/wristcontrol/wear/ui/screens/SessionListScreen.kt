@@ -25,7 +25,7 @@ import dev.wristcontrol.wear.data.model.Loadable
 import dev.wristcontrol.wear.data.model.RemoteSession
 import dev.wristcontrol.wear.ui.components.colorFor
 
-/** Screen 1 of the design doc: pick which `claude --rc` session to follow. */
+/** Screen 1 of the design doc: pick which `claude remote-control` session to follow. */
 @Composable
 fun SessionListScreen(
     sessions: Loadable<List<RemoteSession>>,
@@ -65,7 +65,7 @@ fun SessionListScreen(
             if (sessions.value.isEmpty()) {
                 item {
                     Text(
-                        text = "No active sessions.\nStart one with claude --rc",
+                        text = "No active sessions.\nStart one with claude remote-control",
                         style = MaterialTheme.typography.caption2,
                         color = MaterialTheme.colors.onSurfaceVariant,
                         textAlign = TextAlign.Center,

@@ -22,7 +22,7 @@ Base URLs come from `BuildConfig` and are overridable at build time:
 
 ### `GET /v1/code/sessions`
 
-Lists the caller's live `claude --rc` sessions.
+Lists the caller's live `claude remote-control` sessions.
 
 The decoder accepts a bare array or an object wrapping one under `data` or
 `sessions`, and tolerates two spellings of each field:

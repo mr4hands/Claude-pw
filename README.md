@@ -1,6 +1,6 @@
 # Claude Code Wrist Control
 
-A Wear OS app for watching and steering remote `claude --rc` sessions from your
+A Wear OS app for watching and steering remote `claude remote-control` sessions from your
 wrist: glanceable agent status, one-tap approvals for the commands Claude wants
 to run, and voice dictation for redirecting it mid-task.
 
@@ -19,7 +19,7 @@ docs/      Design document and the relay protocol the client codes against
 
 | Surface | What it does |
 | --- | --- |
-| Session selector | Lists live `claude --rc` sessions from the cloud relay. |
+| Session selector | Lists live `claude remote-control` sessions from the cloud relay. |
 | Dashboard | Animated status ring — idle / thinking / executing / waiting. |
 | Approval gate | The command verbatim, with large approve and deny targets. |
 | Voice | Push-to-talk with a live level meter; transcript confirmed before sending. |
@@ -96,7 +96,7 @@ of release builds.
 ## How it fits together
 
 ```
-Watch (this app) ──WSS──► Anthropic cloud relay ──WSS──► claude --rc on your laptop
+Watch (this app) ──WSS──► Anthropic cloud relay ──WSS──► claude remote-control on your laptop
        │
        ├─ SessionRepository   single source of truth, process-wide
        ├─ ForegroundService   keeps the socket alive when the screen sleeps

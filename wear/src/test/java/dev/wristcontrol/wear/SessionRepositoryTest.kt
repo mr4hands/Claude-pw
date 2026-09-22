@@ -14,10 +14,12 @@ import dev.wristcontrol.wear.data.model.SessionEvent
 import dev.wristcontrol.wear.data.net.ClaudeCodeClient
 import dev.wristcontrol.wear.data.net.SessionStream
 import dev.wristcontrol.wear.data.net.StreamMessage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -112,6 +114,9 @@ class SessionRepositoryTest {
 
         client.emit(StreamMessage.Event(SessionEvent.ApprovalRequested(approvalRequest("req-3"))))
         advanceUntilIdle()
+        // Prove the gate actually opened: without this the assertion below
+        // passes just as happily against a repository that did nothing.
+        assertEquals("req-3", repository.state.value.pendingApproval?.id)
 
         // Someone answered on the host terminal.
         client.emit(StreamMessage.Event(SessionEvent.StatusChanged(AgentStatus.EXECUTING)))
@@ -149,8 +154,11 @@ class SessionRepositoryTest {
         repository.attach(session)
         advanceUntilIdle()
 
+        assertEquals(session, repository.state.value.session)
+
         client.emit(StreamMessage.Connection(ConnectionState.Connected))
         advanceUntilIdle()
+        assertEquals(ConnectionState.Connected, repository.state.value.connection)
 
         repository.detach()
         assertNull(repository.state.value.session)
@@ -168,13 +176,21 @@ class SessionRepositoryTest {
     }
 
     /**
-     * The repository launches long-lived collectors, so it gets the test's
-     * background scope — those never need to complete for the test to finish.
+     * The repository launches long-lived collectors, so its job is parented to
+     * the test's background scope — those never need to complete for the test
+     * to finish.
+     *
+     * The dispatcher is unconfined on purpose. With a standard test dispatcher
+     * the stream collector did not subscribe until the scheduler happened to be
+     * advanced, so events emitted right after `attach` were dropped and several
+     * assertions below passed vacuously against state that had never moved.
      */
     private fun newRepository(scope: TestScope) = SessionRepository(
         clientProvider = { client },
         settings = settings,
-        scope = scope.backgroundScope,
+        scope = CoroutineScope(
+            scope.backgroundScope.coroutineContext + UnconfinedTestDispatcher(scope.testScheduler)
+        ),
         clock = { 0L },
     )
 

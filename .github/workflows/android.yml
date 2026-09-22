@@ -80,8 +80,10 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # No --stacktrace here: it buries the assertion messages under Gradle
+      # internals, and testLogging already prints the failures.
       - name: Run unit tests
-        run: ./gradlew :wear:testDebugUnitTest --stacktrace
+        run: ./gradlew :wear:testDebugUnitTest
 
       - name: Upload test reports
         if: always()
