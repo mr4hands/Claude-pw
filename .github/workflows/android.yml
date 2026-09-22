@@ -2,9 +2,8 @@ name: Android
 
 on:
   push:
-    branches: ["**"]
-  pull_request:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 # A new push supersedes an in-flight run on the same branch.
@@ -30,6 +29,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # Default is "tools platform-tools"; Google removed the legacy
+          # "tools" package, so sdkmanager exits 1 trying to install it.
+          # Empty means licenses only — AGP pulls the platform it needs.
+          packages: ""
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -67,6 +71,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # Default is "tools platform-tools"; Google removed the legacy
+          # "tools" package, so sdkmanager exits 1 trying to install it.
+          # Empty means licenses only — AGP pulls the platform it needs.
+          packages: ""
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -97,6 +106,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # Default is "tools platform-tools"; Google removed the legacy
+          # "tools" package, so sdkmanager exits 1 trying to install it.
+          # Empty means licenses only — AGP pulls the platform it needs.
+          packages: ""
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
