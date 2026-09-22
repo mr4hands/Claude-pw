@@ -126,3 +126,23 @@ sockets to the same session.
 Phases 1–3 of the design document are implemented, plus tiles. The relay
 endpoints are the documented-but-unverified shape described above; swapping in
 the real paths touches `HttpClaudeCodeClient` and `EventCodec` only.
+
+## Broker
+
+`broker/` is a self-hosted relay so the watch and a Claude Code daemon can
+reach each other without either opening an inbound port — both dial out to it
+and it forwards frames. It is deliberately incurious: once two sockets are
+joined it never parses what passes through, so it does not need changing when
+the protocol does.
+
+The watch needs no code changes to use it, only build properties:
+
+```bash
+./gradlew :wear:assembleDebug \
+  -Pwristcontrol.apiBaseUrl=https://broker.example.com/ \
+  -Pwristcontrol.wsBaseUrl=wss://broker.example.com/
+```
+
+See `broker/README.md` for setup, the pairing flow, the security model and
+what is deliberately not done yet. The daemon that runs Claude on your machine
+is not written yet — the broker is the relay only.

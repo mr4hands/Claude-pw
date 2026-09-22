@@ -1,0 +1,25 @@
+{
+  "name": "wristcontrol-broker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Authenticated relay that lets a Wear OS client reach a Claude Code daemon without either end opening an inbound port.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/src/index.js",
+    "mint": "node dist/src/mint.js",
+    "test": "npm run build && node --test \"dist/test/**/*.test.js\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.7.2"
+  }
+}
