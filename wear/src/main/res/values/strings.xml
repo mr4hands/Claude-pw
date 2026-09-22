@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Claude Wrist</string>
+
+    <string name="tile_label">Claude Code</string>
+    <string name="tile_description">Agent status, one-tap approvals and voice input.</string>
+
+    <string name="channel_session">Session</string>
+    <string name="channel_session_description">Keeps the connection to your Claude Code session alive.</string>
+    <string name="channel_approval">Approvals</string>
+    <string name="channel_approval_description">Claude is waiting for permission to run something.</string>
+
+    <string name="approval_title">Run %1$s?</string>
+    <string name="approval_announcement">Claude requests permission to run %1$s: %2$s</string>
+    <string name="approve">Approve</string>
+    <string name="denied">Denied</string>
+    <string name="approved">Approved</string>
+    <string name="deny">Deny</string>
+    <string name="tile_action_failed">Not connected</string>
+</resources>

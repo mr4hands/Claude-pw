@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Claude Wrist</string>
+    <string name="phone_headline">Claude Wrist Control</string>
+    <string name="phone_body">Everything happens on your watch. Use this app only if your watch asks you to sign in here.</string>
+    <string name="sign_in_for_watch">Sign in for watch</string>
+    <string name="sign_in_cancelled">Sign-in cancelled.</string>
+    <string name="sign_in_failed">Sign-in failed.</string>
+    <string name="sent_to_watch">Signed in. Check your watch.</string>
+    <string name="watch_not_reachable">Signed in, but the watch wasn\'t reachable.</string>
+</resources>
