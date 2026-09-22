@@ -13,6 +13,7 @@ import dev.wristcontrol.wear.data.model.SessionEvent
 import dev.wristcontrol.wear.data.net.ClaudeCodeClient
 import dev.wristcontrol.wear.data.net.SessionStream
 import dev.wristcontrol.wear.data.net.StreamMessage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -121,7 +122,19 @@ class SessionRepository(
         val opened = clientProvider().openStream(session.id)
         stream = opened
         streamJob = opened.messages
-            .onEach(::handle)
+            .onEach { message ->
+                try {
+                    handle(message)
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (e: Exception) {
+                    // One event that fails to apply must not take the collector
+                    // down with it. Without this the socket stays open while the
+                    // app quietly stops reacting to anything on it — connected,
+                    // and deaf, which is the worst state this app can be in.
+                    Log.w(TAG, "Dropped an event that failed to apply", e)
+                }
+            }
             .launchIn(scope)
     }
 

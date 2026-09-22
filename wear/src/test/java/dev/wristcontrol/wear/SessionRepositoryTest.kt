@@ -14,7 +14,10 @@ import dev.wristcontrol.wear.data.model.SessionEvent
 import dev.wristcontrol.wear.data.net.ClaudeCodeClient
 import dev.wristcontrol.wear.data.net.SessionStream
 import dev.wristcontrol.wear.data.net.StreamMessage
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,6 +29,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,10 +52,34 @@ class SessionRepositoryTest {
         lastActivityEpochMillis = 0L,
     )
 
+    /**
+     * Anything a repository coroutine throws lands here instead of escaping.
+     *
+     * Previously these scopes hung off the test's background scope, so a
+     * coroutine that failed after its own test had finished surfaced as
+     * `UncaughtExceptionsBeforeTest` on whichever test happened to run next —
+     * order-dependent, and blamed on innocent code. Now each repository gets an
+     * isolated scope whose failures are recorded and asserted here, so a real
+     * failure fails its own test with its own message.
+     */
+    private val uncaught = mutableListOf<Throwable>()
+    private val scopes = mutableListOf<CoroutineScope>()
+
     @Before
     fun setUp() {
         settings = AppSettings(RuntimeEnvironment.getApplication())
         client = RecordingClient()
+        uncaught.clear()
+        scopes.clear()
+    }
+
+    @After
+    fun tearDown() {
+        scopes.forEach { it.cancel() }
+        assertTrue(
+            "repository coroutine(s) failed: " + uncaught.joinToString { it.toString() },
+            uncaught.isEmpty(),
+        )
     }
 
     @Test
@@ -176,23 +204,27 @@ class SessionRepositoryTest {
     }
 
     /**
-     * The repository launches long-lived collectors, so its job is parented to
-     * the test's background scope — those never need to complete for the test
-     * to finish.
-     *
      * The dispatcher is unconfined on purpose. With a standard test dispatcher
      * the stream collector did not subscribe until the scheduler happened to be
      * advanced, so events emitted right after `attach` were dropped and several
-     * assertions below passed vacuously against state that had never moved.
+     * assertions passed vacuously against state that had never moved.
+     *
+     * The scope is deliberately NOT parented to the test scope — see [uncaught].
      */
-    private fun newRepository(scope: TestScope) = SessionRepository(
-        clientProvider = { client },
-        settings = settings,
-        scope = CoroutineScope(
-            scope.backgroundScope.coroutineContext + UnconfinedTestDispatcher(scope.testScheduler)
-        ),
-        clock = { 0L },
-    )
+    private fun newRepository(scope: TestScope): SessionRepository {
+        val handler = CoroutineExceptionHandler { _, throwable -> uncaught += throwable }
+        val repositoryScope = CoroutineScope(
+            UnconfinedTestDispatcher(scope.testScheduler) + SupervisorJob() + handler,
+        )
+        scopes += repositoryScope
+
+        return SessionRepository(
+            clientProvider = { client },
+            settings = settings,
+            scope = repositoryScope,
+            clock = { 0L },
+        )
+    }
 
     private fun approvalRequest(id: String) = ApprovalRequest(
         id = id,
