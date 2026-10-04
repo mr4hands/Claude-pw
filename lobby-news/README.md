@@ -33,12 +33,13 @@ Settings ← Pages ← Custom domain. אחר כך ב-`config/site.toml` שנו `
 
 | הגדרה | איפה | ברירת מחדל |
 |---|---|---|
-| כמה ידיעות בכל הרצה | `config/site.toml` → `max_stories_per_run` | 3 |
+| תקרת ידיעות ליום | `config/site.toml` → `max_stories_per_day` | 8 |
+| כמה ידיעות בכל הרצה | `config/site.toml` → `max_stories_per_run` | 2 |
 | סף חשיבות | `config/site.toml` → `min_importance` | 3 |
 | תדירות | `.github/workflows/newsroom.yml` → `cron` | כל שעתיים |
 | מודל | Settings ← Variables ← `NEWSROOM_MODEL` | `claude-opus-5-5` |
 
-הערכה גסה: בערך $0.25–0.45 לידיעה (כתיבה, בדיקה ותיקונים; שמועה קצת יותר). צריכת הטוקנים בפועל של כל הרצה נרשמת ב-`state/runs.jsonl`. כדי לחסוך בערך חצי אפשר `NEWSROOM_MODEL=claude-sonnet-5-5`.
+הערכה גסה: בערך $0.25–0.45 לידיעה (כתיבה, בדיקה ותיקונים; שמועה קצת יותר), ועוד כמה סנטים לכל הרצה של העורך. עם תקרה של 8 ידיעות ביום זה בערך $70–110 לחודש, ועם `NEWSROOM_MODEL=claude-sonnet-5-5` בערך חצי. צריכת הטוקנים בפועל של כל הרצה נרשמת ב-`state/runs.jsonl`.
 
 ## מקורות
 

@@ -55,7 +55,7 @@ class FakeLLM:
                 "tags": ["PS5"], "games": ["Space Game 2"]}
 
 
-CFG = {"max_stories_per_run": 4, "min_importance": 3}
+CFG = {"max_stories_per_run": 4, "max_stories_per_day": 8, "min_importance": 3}
 
 
 def test_collect_skips_old_and_seen_items():
@@ -116,3 +116,14 @@ def test_site_builds(tmp_path):
     assert 'dir="rtl"' in html and "כותרת" in html
     assert (out / "rumors.html").read_text().count('role="img"') == 1
     assert "<item>" in (out / "feed.xml").read_text()
+
+
+def test_daily_quota_stops_publishing_and_skips_editor():
+    seen = store.Seen(Path("/nonexistent/seen.json"))
+    items = collect([SOURCE], seen, feed_client())
+    pipeline.run(FakeLLM(), items, seen, {**CFG, "max_stories_per_day": 1})
+    assert len(store.load_articles()) == 1
+
+    llm = FakeLLM()
+    result = pipeline.run(llm, items, store.Seen(Path("/nonexistent/seen.json")), {**CFG, "max_stories_per_day": 1})
+    assert not result["published"] and llm.calls == []

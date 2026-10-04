@@ -40,7 +40,8 @@ Group items that report the same story. For each group decide:
   quizzes, anything already covered in the recent headlines list, or anything Israeli gamers won't care about.
 
 importance (1-5): 5 = major announcement/launch/delay of a big game or platform news; 3 = solid mid-tier news;
-1 = trivia. Be strict: on a typical run only a handful of stories should be 3 or above."""
+1 = trivia. Be strict. The test: would an Israeli gamer bring this up with friends? A typical day has only
+5-10 stories like that across all runs, so on most runs zero to two items deserve 3 or above."""
 
 EDITOR_SCHEMA = obj({
     "stories": arr(obj({

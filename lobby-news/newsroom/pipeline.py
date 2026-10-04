@@ -127,18 +127,22 @@ def _clean_slug(slug: str) -> str:
 # ---------------------------------------------------------------- run
 
 def run(llm: LLM, items: list[Item], seen: Seen, cfg: dict, client=None) -> dict:
-    recent = [a.title for a in load_articles()[:40]]
+    articles = load_articles()
+    recent = [a.title for a in articles[:40]]
+    today = now().date().isoformat()
+    room = min(cfg["max_stories_per_run"],
+               cfg["max_stories_per_day"] - sum(a.published_at.startswith(today) for a in articles))
     for it in items:
         seen.add(it.id)
-    if not items:
-        return {"published": [], "dropped": [], "considered": 0}
+    if not items or room <= 0:  # daily quota spent: skip even the editor call
+        return {"published": [], "dropped": [], "considered": len(items)}
 
     stories = agents.editor(llm, items, recent)
     by_id = {it.id: it for it in items}
     chosen = sorted(
         (s for s in stories if s["kind"] != "skip" and s["importance"] >= cfg["min_importance"]),
         key=lambda s: -s["importance"],
-    )[: cfg["max_stories_per_run"]]
+    )[:room]
     log.info("editor: %d stories, %d chosen", len(stories), len(chosen))
 
     published, dropped = [], []
