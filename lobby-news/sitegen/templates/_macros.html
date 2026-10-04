@@ -1,0 +1,25 @@
+{% macro cover(a, big=False) -%}
+<div class="cover{% if big %} big{% endif %}" style="--h: {{ (a.games[0] if a.games else a.title) | hue }}">
+  <span class="cover-game">{{ a.games[0] if a.games else (a.tags[0] if a.tags else site.name) }}</span>
+  {% if a.kind == 'rumor' %}<span class="chip rumor">שמועה</span>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro meter(r) -%}
+<div class="meter {{ r.score | meter_class }}" role="img" aria-label="אמינות {{ r.score }} מתוך 100: {{ r.label }}">
+  <div class="meter-track"><div class="meter-fill" style="width: {{ r.score }}%"></div></div>
+  <div class="meter-text"><b>{{ r.score }}</b>/100 · {{ r.label }}</div>
+</div>
+{%- endmacro %}
+
+{% macro card(a) -%}
+<article class="card">
+  <a href="{{ base }}/a/{{ a.slug }}.html">{{ cover(a) }}</a>
+  <div class="card-body">
+    <div class="meta">{{ a.published_at | he_date }}{% for t in a.tags[:2] %} · {{ t }}{% endfor %}</div>
+    <h3><a href="{{ base }}/a/{{ a.slug }}.html">{{ a.title }}</a></h3>
+    <p>{{ a.dek }}</p>
+    {% if a.reliability %}{{ meter(a.reliability) }}{% endif %}
+  </div>
+</article>
+{%- endmacro %}

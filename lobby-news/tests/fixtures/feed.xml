@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>Test Feed</title>
+<item><title>Studio announces Space Game 2 for PS5 and PC</title><link>https://example.com/space-game-2</link>
+<pubDate>{NOW}</pubDate><description>&lt;p&gt;Space Game 2 launches March 3 on PS5 and PC.&lt;/p&gt;</description></item>
+<item><title>Insider: Space Game 2 coming to Switch 2</title><link>https://example.com/rumor</link>
+<pubDate>{NOW}</pubDate><description>An insider claims a Switch 2 port.</description></item>
+<item><title>Best headset deals this week</title><link>https://example.com/deals</link>
+<pubDate>{NOW}</pubDate><description>Sponsored.</description></item>
+<item><title>Ancient story</title><link>https://example.com/old</link>
+<pubDate>Mon, 01 Jan 2018 10:00:00 GMT</pubDate><description>Old.</description></item>
+</channel></rss>

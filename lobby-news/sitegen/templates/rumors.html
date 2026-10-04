@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card %}
+{% block title %}מד השמועות · {{ site.name }}{% endblock %}
+{% block main %}
+<section class="intro">
+  <h1>מד השמועות</h1>
+  <p>כל הדלפה ושמועה עוברת דיון פנימי: סוכן אחד בונה את הטיעון הכי חזק בעד, סוכן שני הכי חזק נגד, ושופט שלישי קובע ציון אמינות מ-0 עד 100. שמועות מתחת ל-20 לא מתפרסמות בכלל.</p>
+</section>
+{% if articles %}
+<section class="grid">{% for a in articles %}{{ card(a) }}{% endfor %}</section>
+{% else %}
+<p class="empty">עוד אין שמועות במעקב.</p>
+{% endif %}
+{% endblock %}

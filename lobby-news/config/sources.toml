@@ -1,0 +1,53 @@
+# מקורות RSS. kind: official = הודעה רשמית של חברה/פלטפורמה,
+# press = אתר עיתונות מוכר, aggregator = מקבץ/בלוג שמביא גם שמועות.
+# המערכת מצטטת ומקשרת לכל מקור; היא לא מעתיקה טקסט או תמונות.
+
+[[source]]
+name = "PlayStation Blog"
+url = "https://blog.playstation.com/feed/"
+kind = "official"
+
+[[source]]
+name = "Xbox Wire"
+url = "https://news.xbox.com/en-us/feed/"
+kind = "official"
+
+[[source]]
+name = "Nintendo Life"
+url = "https://www.nintendolife.com/feeds/latest"
+kind = "press"
+
+[[source]]
+name = "Steam News"
+url = "https://store.steampowered.com/feeds/news/"
+kind = "official"
+
+[[source]]
+name = "Eurogamer"
+url = "https://www.eurogamer.net/feed"
+kind = "press"
+
+[[source]]
+name = "GameSpot"
+url = "https://www.gamespot.com/feeds/news/"
+kind = "press"
+
+[[source]]
+name = "PC Gamer"
+url = "https://www.pcgamer.com/rss/"
+kind = "press"
+
+[[source]]
+name = "VG247"
+url = "https://www.vg247.com/feed"
+kind = "press"
+
+[[source]]
+name = "Gematsu"
+url = "https://www.gematsu.com/feed"
+kind = "press"
+
+[[source]]
+name = "Insider Gaming"
+url = "https://insider-gaming.com/feed/"
+kind = "aggregator"

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ site.name }} · חדשות גיימינג{% endblock %}</title>
+<meta name="description" content="{% block desc %}{{ site.tagline }}{% endblock %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ base }}/static/style.css">
+<link rel="alternate" type="application/rss+xml" title="{{ site.name }}" href="{{ base }}/feed.xml">
+{% block head %}{% endblock %}
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="logo" href="{{ base }}/"><span class="mark">▶</span>{{ site.name }}</a>
+    <nav>
+      <a href="{{ base }}/" {% if nav == 'home' %}class="on"{% endif %}>חדשות</a>
+      <a href="{{ base }}/rumors.html" {% if nav == 'rumors' %}class="on"{% endif %}>מד השמועות</a>
+      <a href="{{ base }}/reviews.html" {% if nav == 'reviews' %}class="on"{% endif %}>ביקורות</a>
+      <a href="{{ base }}/about.html" {% if nav == 'about' %}class="on"{% endif %}>איך זה עובד</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+{% block main %}{% endblock %}
+</main>
+<footer class="wrap foot">
+  <p><strong>{{ site.name }}</strong> · {{ site.tagline }}</p>
+  <p>החדשות באתר נכתבות ע״י מערכת AI ונבדקות אוטומטית מול המקורות, עם קישור לכל מקור. הביקורות נכתבות ע״י בני אדם. <a href="{{ base }}/about.html">פרטים מלאים</a> · <a href="{{ base }}/feed.xml">RSS</a></p>
+  <p class="muted">© {{ year }}</p>
+</footer>
+</body>
+</html>

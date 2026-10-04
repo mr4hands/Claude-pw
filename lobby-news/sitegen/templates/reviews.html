@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}ביקורות · {{ site.name }}{% endblock %}
+{% block main %}
+<section class="intro">
+  <h1>ביקורות</h1>
+  <p>בלובי, ביקורת נכתבת רק ע״י מי שבאמת שיחק במשחק. ה-AI כותב חדשות; הוא לא ממציא חוויות.</p>
+</section>
+<section class="review-promise">
+  <div class="promise"><span class="big-num">100%</span><p>מהביקורות נכתבות ע״י מבקרים אנושיים, בשמם המלא</p></div>
+  <div class="promise"><span class="big-num">0</span><p>ביקורות על משחקים שהמבקר לא סיים או לא שיחק לעומק</p></div>
+  <div class="promise"><span class="big-num">✓</span><p>גילוי נאות מלא: עותק מהמפיץ? קישור שותפים? כתוב בראש הביקורת</p></div>
+</section>
+<section class="empty">
+  <h2>הביקורת הראשונה בדרך</h2>
+  <p>אנחנו מגייסים מבקרים. רוצים לכתוב לנו? <a href="{{ base }}/about.html#join">דברו איתנו</a>.</p>
+</section>
+{% endblock %}

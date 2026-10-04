@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, cover, meter %}
+{% block main %}
+{% if articles %}
+{% set lead = articles[0] %}
+<section class="lead">
+  <a href="{{ base }}/a/{{ lead.slug }}.html">{{ cover(lead, big=True) }}</a>
+  <div>
+    <div class="meta">{{ lead.published_at | he_date }}{% for t in lead.tags[:3] %} · {{ t }}{% endfor %}</div>
+    <h1><a href="{{ base }}/a/{{ lead.slug }}.html">{{ lead.title }}</a></h1>
+    <p class="dek">{{ lead.dek }}</p>
+    {% if lead.reliability %}{{ meter(lead.reliability) }}{% endif %}
+  </div>
+</section>
+<h2 class="section">עוד חדשות</h2>
+<section class="grid">
+{% for a in articles[1:] %}{{ card(a) }}{% endfor %}
+</section>
+{% else %}
+<section class="empty">
+  <h1>המערכת מתחממת</h1>
+  <p>החדשות הראשונות יופיעו כאן אחרי ההרצה הראשונה של חדר החדשות.</p>
+</section>
+{% endif %}
+{% endblock %}

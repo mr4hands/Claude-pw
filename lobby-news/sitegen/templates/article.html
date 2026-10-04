@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import cover, meter, card %}
+{% block title %}{{ a.title }} · {{ site.name }}{% endblock %}
+{% block desc %}{{ a.dek }}{% endblock %}
+{% block head %}
+<meta property="og:title" content="{{ a.title }}">
+<meta property="og:description" content="{{ a.dek }}">
+<meta property="og:type" content="article">
+{% endblock %}
+{% block main %}
+<article class="story">
+  <div class="meta">{{ a.published_at | he_date }}{% for t in a.tags %} · {{ t }}{% endfor %}</div>
+  <h1>{{ a.title }}</h1>
+  <p class="dek">{{ a.dek }}</p>
+  {{ cover(a, big=True) }}
+  {% if a.reliability %}
+  <aside class="verdict">
+    <h2>מד האמינות</h2>
+    {{ meter(a.reliability) }}
+    <p>{{ a.reliability.summary }}</p>
+    <div class="cases">
+      <div><h3>בעד</h3><ul>{% for p in a.reliability.case_for %}<li>{{ p }}</li>{% endfor %}</ul></div>
+      <div><h3>נגד</h3><ul>{% for p in a.reliability.case_against %}<li>{{ p }}</li>{% endfor %}</ul></div>
+    </div>
+    <p class="muted small">הציון נקבע בדיון בין שני סוכני AI, אחד בעד ואחד נגד, ושופט שלישי. <a href="{{ base }}/about.html#rumors">איך זה עובד</a></p>
+  </aside>
+  {% endif %}
+  <div class="body">{{ a.html | safe }}</div>
+  <section class="sources">
+    <h2>מקורות</h2>
+    <ul>{% for s in a.sources %}<li><a href="{{ s.url }}" rel="nofollow noopener" target="_blank">{{ s.name }}</a>{% if s.kind == 'official' %} <span class="chip">רשמי</span>{% endif %}</li>{% endfor %}</ul>
+    <p class="byline">{{ a.byline }}{% if a.factcheck.rounds and a.factcheck.rounds > 1 %} · עבר {{ a.factcheck.rounds }} סבבי בדיקה{% endif %}. מצאתם טעות? <a href="{{ base }}/about.html#errors">דווחו לנו</a>.</p>
+  </section>
+</article>
+{% if related %}
+<h2 class="section">עוד על {{ a.games[0] }}</h2>
+<section class="grid">{% for r in related %}{{ card(r) }}{% endfor %}</section>
+{% endif %}
+{% endblock %}

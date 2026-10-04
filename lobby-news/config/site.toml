@@ -1,0 +1,16 @@
+# זהות האתר
+name = "לובי"
+name_en = "Lobby"
+tagline = "חדשות גיימינג בעברית. מהר, עם מקורות, בלי שטויות."
+# כתובת האתר המלאה (לפיד RSS ולמפת האתר). להחליף כשיהיה דומיין.
+base_url = "https://example.github.io/lobby-news"
+# נתיב בסיס לקישורים פנימיים. "" לדומיין משלכם, "/lobby-news" ל-GitHub Pages רגיל.
+base_path = "/lobby-news"
+
+[newsroom]
+# כמה ידיעות לכל היותר בכל הרצה (ההרצה מתוזמנת כל שעתיים)
+max_stories_per_run = 3
+# ציון חשיבות מינימלי (1-5) כדי שידיעה תיכתב
+min_importance = 3
+# כמה ימים לזכור פריטים שכבר נראו
+seen_ttl_days = 14
